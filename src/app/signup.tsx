@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
-const API_URL = 'http://192.168.29.105:5000';
+const API_URL = 'https://landconnect-1yni.onrender.com';
 
 export default function SignupScreen() {
   const [name, setName] = useState('');

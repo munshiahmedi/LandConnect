@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { io, Socket } from 'socket.io-client';
 
-const API_URL = 'http://192.168.29.105:5000';
+const API_URL = 'https://landconnect-1yni.onrender.com';
 
 type IncomingCall = {
   callerId: string | number;

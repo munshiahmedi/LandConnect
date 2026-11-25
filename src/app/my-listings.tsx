@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://192.168.29.105:5000';
+const API_URL = 'https://landconnect-1yni.onrender.com';
 
 type Listing = {
   id: number;

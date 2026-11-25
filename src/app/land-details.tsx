@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
-const API_URL = 'http://192.168.29.105:5000';
+const API_URL = 'https://landconnect-1yni.onrender.com';
 
 type LandImage = {
   id: number;

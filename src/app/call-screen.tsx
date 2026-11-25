@@ -24,7 +24,7 @@ import { Track, RoomEvent } from 'livekit-client';
 
 registerGlobals();
 
-const API_URL = 'http://192.168.29.105:5000';
+const API_URL = 'https://landconnect-1yni.onrender.com';
 
 type CallControlsProps = {
   callType: string;
