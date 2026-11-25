@@ -1,56 +1,174 @@
-# Welcome to your Expo app 👋
+# LandConnect – Land Marketplace Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+LandConnect is a mobile land marketplace application built with React Native and Expo. It allows buyers, sellers, and brokers to explore land listings, manage properties, communicate through messaging, and connect through audio and video calls.
 
-## Get started
+## Features
 
-1. Install dependencies
+### Authentication and User Roles
+- User registration and login
+- JWT-based authentication
+- Buyer, Seller, and Broker roles
+- Role-based access control
 
-   ```bash
-   npm install
-   ```
+### Land Listings
+- Browse available land listings
+- View land details, descriptions, prices, and locations
+- Sellers and Brokers can create land listings
+- Edit and delete owned listings
+- Upload and display land images
+- Listing ownership verification
 
-2. Start the app
+### Location
+- Capture location using device GPS
+- Store land latitude and longitude
+- Open land locations using Google Maps
 
-   ```bash
-   npx expo start
-   ```
+Note: An embedded map inside the application is not currently implemented.
 
-In the output, you'll find options to open the app in a
+### Messaging
+- Buyer and Seller messaging
+- Backend messaging APIs
+- Real-time communication support through Socket.IO
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Audio and Video Calling
+- LiveKit-based audio and video calls
+- Incoming call handling
+- Accept and reject calls
+- End calls
+- Two-way audio and video communication
+- Private call rooms without sharing phone numbers
 
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Security and Privacy
+- JWT authentication
+- Role-based authorization
+- Listing ownership checks
+- Buyers cannot create or manage listings
+- Only Sellers and Brokers can upload listing images
+- Users cannot update or delete listings owned by other users
+- Seller phone numbers are not exposed in public listing details
 
-## Get a fresh project
+## Technology Stack
 
-When you're ready, run:
+**Frontend**
+- React Native
+- Expo
+- Expo Router
+- JavaScript / TypeScript
 
-```bash
-npm run reset-project
+**Backend**
+- Node.js
+- Express.js
+- REST APIs
+- Socket.IO
+- JWT Authentication
+
+**Database**
+- MySQL
+
+**Audio and Video**
+- LiveKit
+
+**Development Tools**
+- Git and GitHub
+- Postman
+- VS Code
+- EAS Build
+
+## Project Structure
+
+```text
+LandConnect/
+├── src/
+│   └── app/
+├── server/
+│   ├── config/
+│   ├── controllers/
+│   ├── routes/
+│   ├── middleware/
+│   └── server.js
+├── assets/
+├── app.json
+├── package.json
+└── README.md
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+## Installation and Setup
 
-### Other setup steps
+### Prerequisites
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+- Node.js
+- npm
+- MySQL
+- Expo development environment
+- Android device or emulator
 
-## Learn more
+### 1. Clone the Repository
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+git clone https://github.com/munshiahmedi/LandConnect.git
+cd LandConnect
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 2. Frontend Setup
 
-## Join the community
+```bash
+npm install
+```
 
-Join our community of developers creating universal apps.
+### 3. Backend Setup
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+cd server
+npm install
+```
+
+Create a `.env` file inside the `server` directory and configure your local database and authentication settings.
+
+Required configuration keys:
+
+```env
+PORT=5000
+DB_HOST=localhost
+DB_USER=your_mysql_username
+DB_PASSWORD=your_mysql_password
+DB_NAME=landconnect_db
+JWT_SECRET=your_secure_jwt_secret
+```
+
+Configure the LiveKit credentials required by the call token service using the variable names expected by the backend.
+
+Do not commit `.env` files or secret credentials to GitHub.
+
+### 4. Database Setup
+
+Create a MySQL database named:
+
+```sql
+CREATE DATABASE landconnect_db;
+```
+
+Import or execute the project's database schema to create the required tables.
+
+### 5. Start the Backend
+
+From the `server` directory:
+
+```bash
+node server.js
+```
+
+The backend runs on port `5000` by default.
+
+### 6. Start the Frontend
+
+Open a new terminal in the project root:
+
+```bash
+npx expo start --dev-client --lan
+```
+
+Use the development build on your Android device.
+
+For a physical device, configure the frontend API base URL to use your computer's local network IP address instead of `localhost`.
+
+## Audio
