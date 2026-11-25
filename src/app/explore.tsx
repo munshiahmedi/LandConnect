@@ -1,180 +1,292 @@
-import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ExternalLink } from '@/components/external-link';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
-export default function TabTwoScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
+const API_URL = 'http://192.168.29.105:5000';
+
+type Land = {
+  id: number;
+  title: string;
+  description: string;
+  price: string | number;
+  area: string | number | null;
+  area_unit: string;
+  address: string;
+  city: string;
+  state: string;
+  status: string;
+  images?: { id: number; image_url: string }[];
+};
+
+export default function ExploreScreen() {
+  const router = useRouter();
+
+  const [lands, setLands] = useState<Land[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchLands();
+  }, []);
+
+  const fetchLands = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await fetch(`${API_URL}/api/lands`);
+
+      if (!response.ok) {
+        throw new Error('Unable to fetch land listings');
+      }
+
+      const data = await response.json();
+      const landList: Land[] = data.lands || [];
+
+      const landsWithImages = await Promise.all(
+        landList.map(async (land) => {
+          try {
+            const imageResponse = await fetch(
+              `${API_URL}/api/lands/${land.id}/images`
+            );
+
+            if (!imageResponse.ok) return { ...land, images: [] };
+
+            const imageData = await imageResponse.json();
+
+            return {
+              ...land,
+              images: imageData.images || [],
+            };
+          } catch {
+            return { ...land, images: [] };
+          }
+        })
+      );
+
+      setLands(landsWithImages);
+    } catch (err) {
+      console.error('Fetch lands error:', err);
+      setError('Unable to load lands. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
   };
-  const theme = useTheme();
 
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
+  const formatPrice = (price: string | number) =>
+    `₹${Number(price).toLocaleString('en-IN')}`;
 
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
-          </ThemedText>
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <View style={styles.header}>
+          <Pressable
+            onPress={() => {
+              if (router.canGoBack()) router.back();
+              else router.replace('/dashboard');
+            }}
+          >
+            <Text style={styles.back}>← Back</Text>
+          </Pressable>
 
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
-              </ThemedView>
+          <Text style={styles.heading}>Explore Lands</Text>
+          <Text style={styles.subtitle}>
+            Find land opportunities around you.
+          </Text>
+        </View>
+
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color="#176B45"
+            style={styles.loader}
+          />
+        ) : error ? (
+          <View style={styles.messageContainer}>
+            <Text style={styles.error}>{error}</Text>
+            <Pressable style={styles.retryButton} onPress={fetchLands}>
+              <Text style={styles.retryText}>Try Again</Text>
             </Pressable>
-          </ExternalLink>
-        </ThemedView>
+          </View>
+        ) : lands.length === 0 ? (
+          <Text style={styles.empty}>
+            No land listings available yet.
+          </Text>
+        ) : (
+          lands.map((land) => (
+            <Pressable
+              key={land.id}
+              style={styles.card}
+              onPress={() =>
+                router.push({
+                  pathname: '/land-details',
+                  params: { id: String(land.id) },
+                })
+              }
+            >
+              {land.images && land.images.length > 0 ? (
+                <Image
+                  source={{ uri: land.images[0].image_url }}
+                  style={styles.landImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.emoji}>🌳</Text>
+                  <Text style={styles.placeholderText}>
+                    No property photo
+                  </Text>
+                </View>
+              )}
 
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+              <Text style={styles.title}>{land.title}</Text>
 
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
-              </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              />
-            </ThemedView>
-          </Collapsible>
+              <Text style={styles.location}>
+                📍 {[land.address, land.city, land.state]
+                  .filter(Boolean)
+                  .join(', ')}
+              </Text>
 
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+              {land.area !== null && (
+                <Text style={styles.area}>
+                  Area: {land.area} {land.area_unit || ''}
+                </Text>
+              )}
 
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+              <Text style={styles.price}>
+                {formatPrice(land.price)}
+              </Text>
 
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
-            </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === 'web' && <WebBadge />}
-      </ThemedView>
-    </ScrollView>
+              <Text style={styles.status}>
+                Status: {land.status}
+              </Text>
+
+              <Text style={styles.viewDetails}>
+                Tap to view details →
+              </Text>
+            </Pressable>
+          ))
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
   container: {
-    maxWidth: MaxContentWidth,
-    flexGrow: 1,
+    flex: 1,
+    backgroundColor: '#F8FAF7',
   },
-  titleContainer: {
-    gap: Spacing.three,
+  header: {
+    padding: 22,
+  },
+  back: {
+    color: '#176B45',
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  heading: {
+    fontSize: 27,
+    fontWeight: 'bold',
+    color: '#183D2B',
+  },
+  subtitle: {
+    color: '#68776D',
+    marginTop: 8,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 15,
+    elevation: 2,
+  },
+  landImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 14,
+  },
+  imagePlaceholder: {
+    height: 150,
+    backgroundColor: '#E6F1E9',
+    borderRadius: 12,
     alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
+    justifyContent: 'center',
+    marginBottom: 14,
   },
-  centerText: {
+  emoji: {
+    fontSize: 40,
+  },
+  placeholderText: {
+    color: '#68776D',
+    marginTop: 5,
+  },
+  title: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    color: '#183D2B',
+  },
+  location: {
+    color: '#68776D',
+    marginTop: 10,
+  },
+  area: {
+    color: '#68776D',
+    marginTop: 8,
+  },
+  price: {
+    color: '#176B45',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 12,
+  },
+  status: {
+    color: '#68776D',
+    marginTop: 8,
+  },
+  viewDetails: {
+    color: '#176B45',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 12,
+  },
+  loader: {
+    marginTop: 50,
+  },
+  messageContainer: {
+    alignItems: 'center',
+    padding: 25,
+  },
+  error: {
+    color: '#C0392B',
     textAlign: 'center',
   },
-  pressed: {
-    opacity: 0.7,
+  retryButton: {
+    marginTop: 15,
+    backgroundColor: '#176B45',
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
-  linkButton: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    justifyContent: 'center',
-    gap: Spacing.one,
-    alignItems: 'center',
+  retryText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
-  sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-  },
-  collapsibleContent: {
-    alignItems: 'center',
-  },
-  imageTutorial: {
-    width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  imageReact: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
+  empty: {
+    textAlign: 'center',
+    color: '#68776D',
+    marginTop: 40,
   },
 });
