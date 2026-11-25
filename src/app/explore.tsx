@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 const API_URL = 'https://landconnect-1yni.onrender.com';
+const testListingMarkers = [
+  'postman',
+  'unauthorized ownership update',
+  'adoni test location',
+];
 
 type Land = {
   id: number;
@@ -32,17 +37,17 @@ export default function ExploreScreen() {
   const router = useRouter();
 
   const [lands, setLands] = useState<Land[]>([]);
+  const [failedImageIds, setFailedImageIds] = useState<Set<number>>(
+    () => new Set()
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchLands();
-  }, []);
-
-  const fetchLands = async () => {
+  const fetchLands = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
+      setFailedImageIds(new Set());
 
       const response = await fetch(`${API_URL}/api/lands`);
 
@@ -51,7 +56,22 @@ export default function ExploreScreen() {
       }
 
       const data = await response.json();
-      const landList: Land[] = data.lands || [];
+      const landList: Land[] = (data.lands || []).filter((land: Land) => {
+        const searchableText = [
+          land.title,
+          land.description,
+          land.address,
+          land.city,
+          land.state,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        return !testListingMarkers.some((marker) =>
+          searchableText.includes(marker)
+        );
+      });
 
       const landsWithImages = await Promise.all(
         landList.map(async (land) => {
@@ -81,7 +101,11 @@ export default function ExploreScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchLands);
+  }, [fetchLands]);
 
   const formatPrice = (price: string | number) =>
     `₹${Number(price).toLocaleString('en-IN')}`;
@@ -134,22 +158,34 @@ export default function ExploreScreen() {
                 })
               }
             >
-              {land.images && land.images.length > 0 ? (
+              {land.images &&
+              land.images.length > 0 &&
+              !failedImageIds.has(land.id) ? (
                 <Image
                   source={{ uri: land.images[0].image_url }}
                   style={styles.landImage}
                   resizeMode="cover"
+                  onError={() =>
+                    setFailedImageIds((previous) =>
+                      new Set(previous).add(land.id)
+                    )
+                  }
                 />
               ) : (
                 <View style={styles.imagePlaceholder}>
-                  <Text style={styles.emoji}>🌳</Text>
-                  <Text style={styles.placeholderText}>
-                    No property photo
-                  </Text>
+                  <Text style={styles.placeholderIcon}>▧</Text>
+                  <Text style={styles.placeholderBadge}>Photo coming soon</Text>
                 </View>
               )}
 
-              <Text style={styles.title}>{land.title}</Text>
+              <View style={styles.titlePriceRow}>
+                <Text style={styles.title} numberOfLines={2}>
+                  {land.title}
+                </Text>
+                <Text style={styles.price}>
+                  {formatPrice(land.price)}
+                </Text>
+              </View>
 
               <Text style={styles.location}>
                 📍 {[land.address, land.city, land.state]
@@ -162,10 +198,6 @@ export default function ExploreScreen() {
                   Area: {land.area} {land.area_unit || ''}
                 </Text>
               )}
-
-              <Text style={styles.price}>
-                {formatPrice(land.price)}
-              </Text>
 
               <Text style={styles.status}>
                 Status: {land.status}
@@ -208,9 +240,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     marginHorizontal: 20,
     marginBottom: 16,
-    padding: 20,
+    padding: 16,
     borderRadius: 15,
     elevation: 2,
+  },
+  titlePriceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
   },
   landImage: {
     width: '100%',
@@ -226,31 +264,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 14,
   },
-  emoji: {
-    fontSize: 40,
+  placeholderIcon: {
+    color: '#91A999',
+    fontSize: 34,
+    marginBottom: 8,
   },
-  placeholderText: {
+  placeholderBadge: {
+    overflow: 'hidden',
+    backgroundColor: '#F7FAF6',
+    borderRadius: 20,
     color: '#68776D',
-    marginTop: 5,
+    fontSize: 12,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
   },
   title: {
+    flex: 1,
     fontSize: 19,
     fontWeight: 'bold',
     color: '#183D2B',
   },
+  price: {
+    color: '#176B45',
+    fontSize: 17,
+    fontWeight: 'bold',
+    textAlign: 'right',
+  },
   location: {
     color: '#68776D',
-    marginTop: 10,
+    marginTop: 6,
   },
   area: {
     color: '#68776D',
-    marginTop: 8,
-  },
-  price: {
-    color: '#176B45',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 12,
+    marginTop: 5,
   },
   status: {
     color: '#68776D',

@@ -33,12 +33,16 @@ type Listing = {
 
 export default function MyListingsScreen() {
   const [listings, setListings] = useState<Listing[]>([]);
+  const [failedImageIds, setFailedImageIds] = useState<Set<number>>(
+    () => new Set()
+  );
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const fetchMyListings = async () => {
     try {
       setLoading(true);
+      setFailedImageIds(new Set());
 
       const token = await SecureStore.getItemAsync('authToken');
 
@@ -239,22 +243,32 @@ export default function MyListingsScreen() {
         ) : (
           listings.map((item) => (
             <View style={styles.card} key={item.id}>
-              {item.imageUrl ? (
+              {item.imageUrl && !failedImageIds.has(item.id) ? (
                 <Image
                   source={{ uri: item.imageUrl }}
                   style={styles.landImage}
                   resizeMode="cover"
+                  onError={() =>
+                    setFailedImageIds((previous) =>
+                      new Set(previous).add(item.id)
+                    )
+                  }
                 />
               ) : (
                 <View style={styles.imagePlaceholder}>
-                  <Text style={styles.emoji}>🌳</Text>
-                  <Text style={styles.placeholderText}>
-                    No photo available
-                  </Text>
+                  <Text style={styles.placeholderIcon}>▧</Text>
+                  <Text style={styles.placeholderBadge}>Photo coming soon</Text>
                 </View>
               )}
 
-              <Text style={styles.title}>{item.title}</Text>
+              <View style={styles.titlePriceRow}>
+                <Text style={styles.title} numberOfLines={2}>
+                  {item.title}
+                </Text>
+                <Text style={styles.price}>
+                  {formatPrice(item.price)}
+                </Text>
+              </View>
 
               <Text style={styles.location}>
                 📍 {[item.address, item.city, item.state]
@@ -264,10 +278,6 @@ export default function MyListingsScreen() {
 
               <Text style={styles.info}>
                 Area: {item.area ?? 'Not specified'} {item.area_unit || ''}
-              </Text>
-
-              <Text style={styles.price}>
-                {formatPrice(item.price)}
               </Text>
 
               <Text
@@ -391,32 +401,45 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  emoji: {
-    fontSize: 32,
+  placeholderIcon: {
+    color: '#91A999',
+    fontSize: 34,
+    marginBottom: 8,
   },
-  placeholderText: {
+  placeholderBadge: {
+    overflow: 'hidden',
+    backgroundColor: '#F7FAF6',
+    borderRadius: 20,
     color: '#68776D',
     fontSize: 12,
-    marginTop: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
   },
   title: {
+    flex: 1,
     fontSize: 19,
     fontWeight: 'bold',
     color: '#183D2B',
   },
+  titlePriceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
   location: {
     color: '#68776D',
-    marginTop: 9,
+    marginTop: 6,
   },
   info: {
     color: '#68776D',
-    marginTop: 9,
+    marginTop: 5,
   },
   price: {
     color: '#176B45',
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: 'bold',
-    marginTop: 12,
+    textAlign: 'right',
   },
   status: {
     alignSelf: 'flex-start',
@@ -454,7 +477,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     borderRadius: 9,
-    backgroundColor: '#FCE8E8',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8B8B4',
     alignItems: 'center',
   },
   deleteText: {

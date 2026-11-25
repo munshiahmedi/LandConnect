@@ -8,9 +8,11 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 
 export default function MeetingRoomsScreen() {
   const router = useRouter();
@@ -24,6 +26,28 @@ export default function MeetingRoomsScreen() {
       `landconnect-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
     setCreatedRoomId(newRoomId);
+  };
+
+  const copyRoomId = async () => {
+    try {
+      await Clipboard.setStringAsync(createdRoomId);
+      Alert.alert('Copied', 'Meeting Room ID copied to clipboard.');
+    } catch (error) {
+      console.error('Copy Room ID error:', error);
+      Alert.alert('Unable to copy', 'Please try again.');
+    }
+  };
+
+  const shareRoomId = async () => {
+    try {
+      await Share.share({
+        title: 'Join my LandConnect meeting',
+        message: `Join my LandConnect meeting. Room ID: ${createdRoomId}`,
+      });
+    } catch (error) {
+      console.error('Share Room ID error:', error);
+      Alert.alert('Unable to share', 'Please try again.');
+    }
   };
 
   const startMeeting = () => {
@@ -135,6 +159,23 @@ export default function MeetingRoomsScreen() {
               <Text style={styles.hint}>
                 Share this ID with the person you want to invite.
               </Text>
+
+              <View style={styles.roomActions}>
+                <Pressable
+                  accessibilityRole="button"
+                  style={styles.secondaryButton}
+                  onPress={copyRoomId}
+                >
+                  <Text style={styles.secondaryButtonText}>Copy Room ID</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  style={styles.secondaryButton}
+                  onPress={shareRoomId}
+                >
+                  <Text style={styles.secondaryButtonText}>Share</Text>
+                </Pressable>
+              </View>
 
               <Pressable
                 style={styles.startButton}
@@ -284,6 +325,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 10,
     marginBottom: 14,
+  },
+  roomActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  secondaryButton: {
+    flex: 1,
+    minHeight: 44,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#B7D3BB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
+    color: '#176B45',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
   startButton: {
     backgroundColor: '#183D2B',

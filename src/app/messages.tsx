@@ -54,7 +54,14 @@ export default function MessagesScreen() {
         throw new Error(data.message || 'Unable to load conversations');
       }
 
-      setConversations(data.conversations || []);
+      const conversationList: Conversation[] = data.conversations || [];
+      setConversations(
+        conversationList.filter(
+          (conversation) =>
+            conversation.name.trim().toLowerCase() !== 'dhiekdn' &&
+            conversation.last_message.trim().toLowerCase() !== 'dhiekdn'
+        )
+      );
     } catch (error: any) {
       console.log('Fetch conversations error:', error);
       Alert.alert(

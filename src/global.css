@@ -7,3 +7,17 @@
   --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
 }
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #edf5ee inset;
+  -webkit-text-fill-color: #183d2b;
+  caret-color: #183d2b;
+}
+
+input:autofill {
+  box-shadow: 0 0 0 1000px #edf5ee inset;
+  color: #183d2b;
+  caret-color: #183d2b;
+}
