@@ -23,7 +23,7 @@ exports.createLand = async (req, res) => {
       });
     }
 
-    if (Number(price) <= 0 || !Number.isFinite(Number(price))) {
+    if (!Number.isFinite(Number(price)) || Number(price) <= 0) {
       return res.status(400).json({
         message: 'Price must be greater than zero'
       });
@@ -49,13 +49,13 @@ exports.createLand = async (req, res) => {
       ]
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Land listing created successfully',
       landId: result.insertId
     });
   } catch (error) {
     console.error('Create land error:', error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -63,19 +63,20 @@ exports.createLand = async (req, res) => {
 exports.getAllLands = async (req, res) => {
   try {
     const [lands] = await db.query(
-      `SELECT lands.*, users.name AS owner_name, users.role AS owner_role
+      `SELECT lands.*, users.name AS owner_name,
+       users.role AS owner_role
        FROM lands
        JOIN users ON lands.owner_id = users.id
        ORDER BY lands.created_at DESC`
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       count: lands.length,
       lands
     });
   } catch (error) {
     console.error('Get lands error:', error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -83,7 +84,8 @@ exports.getAllLands = async (req, res) => {
 exports.getLandById = async (req, res) => {
   try {
     const [lands] = await db.query(
-      `SELECT lands.*, users.name AS owner_name, users.role AS owner_role
+      `SELECT lands.*, users.name AS owner_name,
+       users.role AS owner_role
        FROM lands
        JOIN users ON lands.owner_id = users.id
        WHERE lands.id = ?`,
@@ -96,10 +98,10 @@ exports.getLandById = async (req, res) => {
       });
     }
 
-    res.status(200).json({ land: lands[0] });
+    return res.status(200).json({ land: lands[0] });
   } catch (error) {
     console.error('Get land error:', error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -131,7 +133,12 @@ exports.updateLand = async (req, res) => {
       });
     }
 
-    if (existing[0].owner_id !== req.user.id) {
+    // Debug logs for ownership verification
+    console.log('Listing owner ID:', existing[0].owner_id);
+    console.log('Logged-in user ID:', req.user.id);
+
+    // Only the listing owner can update it
+    if (Number(existing[0].owner_id) !== Number(req.user.id)) {
       return res.status(403).json({
         message: 'You can only update your own listings'
       });
@@ -145,8 +152,10 @@ exports.updateLand = async (req, res) => {
       });
     }
 
-    if (price !== undefined &&
-        (!Number.isFinite(Number(price)) || Number(price) <= 0)) {
+    if (
+      price !== undefined &&
+      (!Number.isFinite(Number(price)) || Number(price) <= 0)
+    ) {
       return res.status(400).json({
         message: 'Price must be greater than zero'
       });
@@ -182,12 +191,12 @@ exports.updateLand = async (req, res) => {
       ]
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Land listing updated successfully'
     });
   } catch (error) {
     console.error('Update land error:', error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -205,7 +214,12 @@ exports.deleteLand = async (req, res) => {
       });
     }
 
-    if (existing[0].owner_id !== req.user.id) {
+    // Debug logs for ownership verification
+    console.log('Listing owner ID:', existing[0].owner_id);
+    console.log('Logged-in user ID:', req.user.id);
+
+    // Only the listing owner can delete it
+    if (Number(existing[0].owner_id) !== Number(req.user.id)) {
       return res.status(403).json({
         message: 'You can only delete your own listings'
       });
@@ -216,11 +230,11 @@ exports.deleteLand = async (req, res) => {
       [req.params.id]
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Land listing deleted successfully'
     });
   } catch (error) {
     console.error('Delete land error:', error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 };

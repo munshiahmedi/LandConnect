@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
 
 const API_URL = 'http://192.168.29.105:5000';
 
@@ -114,6 +115,52 @@ export default function LandDetailsScreen() {
       console.error('Unable to open Google Maps:', err);
     }
   };
+
+  const mapHtml = hasCoordinates
+    ? `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        />
+        <style>
+          html, body, #map {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+          }
+        </style>
+      </head>
+      <body>
+        <div id="map"></div>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script>
+          const lat = ${latitude};
+          const lng = ${longitude};
+
+          const map = L.map('map').setView([lat, lng], 15);
+
+          L.tileLayer(
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            {
+              attribution: '&copy; OpenStreetMap contributors',
+              maxZoom: 19
+            }
+          ).addTo(map);
+
+          L.marker([lat, lng])
+            .addTo(map)
+            .bindPopup('LandConnect Property Location')
+            .openPopup();
+        </script>
+      </body>
+      </html>
+    `
+    : '';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -223,14 +270,25 @@ export default function LandDetailsScreen() {
               </Text>
 
               {hasCoordinates ? (
-                <View style={styles.noMap}>
-                  <Text style={styles.noMapEmoji}>📍</Text>
+                <>
+                  <View style={styles.mapContainer}>
+                    <WebView
+                      originWhitelist={['*']}
+                      source={{ html: mapHtml }}
+                      javaScriptEnabled
+                      domStorageEnabled
+                      style={styles.map}
+                      scrollEnabled={false}
+                      onError={(event) =>
+                        console.error(
+                          'Map loading error:',
+                          event.nativeEvent
+                        )
+                      }
+                    />
+                  </View>
 
-                  <Text style={styles.noMapTitle}>
-                    Land Location Available
-                  </Text>
-
-                  <Text style={styles.noMapText}>
+                  <Text style={styles.coordinates}>
                     Latitude: {latitude}
                     {'\n'}
                     Longitude: {longitude}
@@ -241,10 +299,10 @@ export default function LandDetailsScreen() {
                     onPress={openGoogleMaps}
                   >
                     <Text style={styles.buttonText}>
-                      Open in Google Maps
+                      Open Directions in Google Maps
                     </Text>
                   </Pressable>
-                </View>
+                </>
               ) : (
                 <View style={styles.noMap}>
                   <Text style={styles.noMapEmoji}>📍</Text>
@@ -366,6 +424,21 @@ const styles = StyleSheet.create({
     color: '#68776D',
     fontSize: 15,
     lineHeight: 23,
+  },
+  mapContainer: {
+    height: 280,
+    overflow: 'hidden',
+    borderRadius: 14,
+    backgroundColor: '#EAF1E9',
+  },
+  map: {
+    flex: 1,
+  },
+  coordinates: {
+    color: '#68776D',
+    textAlign: 'center',
+    marginTop: 12,
+    lineHeight: 22,
   },
   noMap: {
     backgroundColor: '#EAF1E9',

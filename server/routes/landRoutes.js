@@ -1,13 +1,12 @@
+
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const express = require('express');
+const router = express.Router();
 
 const {
   uploadLandImage,
   getLandImages
 } = require('../controllers/imageController');
-const express = require('express');
-const router = express.Router();
 
 const {
   createLand,
@@ -18,24 +17,9 @@ const {
 } = require('../controllers/landController');
 
 const authMiddleware = require('../middleware/authMiddleware');
-const uploadDir = path.join(__dirname, '../uploads');
 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName =
-      `${Date.now()}-${Math.round(Math.random() * 1e9)}` +
-      path.extname(file.originalname).toLowerCase();
-
-    cb(null, uniqueName);
-  },
-});
+// Store uploaded images temporarily in memory
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -48,8 +32,11 @@ const upload = multer({
     }
   },
 });
+
+// Get images of a land listing
 router.get('/:id/images', getLandImages);
 
+// Upload land image
 router.post(
   '/:id/images',
   authMiddleware,
@@ -64,11 +51,12 @@ router.post(
   upload.single('image'),
   uploadLandImage
 );
+
 // Public routes
 router.get('/', getAllLands);
 router.get('/:id', getLandById);
 
-// Only Seller and Broker can create listings
+// Create listing
 router.post('/', authMiddleware, (req, res, next) => {
   if (!['Seller', 'Broker'].includes(req.user.role)) {
     return res.status(403).json({
@@ -78,7 +66,7 @@ router.post('/', authMiddleware, (req, res, next) => {
   next();
 }, createLand);
 
-// Only Seller and Broker can update listings
+// Update listing
 router.put('/:id', authMiddleware, (req, res, next) => {
   if (!['Seller', 'Broker'].includes(req.user.role)) {
     return res.status(403).json({
@@ -88,7 +76,7 @@ router.put('/:id', authMiddleware, (req, res, next) => {
   next();
 }, updateLand);
 
-// Only Seller and Broker can delete listings
+// Delete listing
 router.delete('/:id', authMiddleware, (req, res, next) => {
   if (!['Seller', 'Broker'].includes(req.user.role)) {
     return res.status(403).json({

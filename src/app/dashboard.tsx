@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -58,7 +59,6 @@ export default function DashboardScreen() {
         return;
       }
 
-      // Support either direct user response or { user: ... }
       const profile = data.user || data;
 
       setUser(profile);
@@ -70,6 +70,7 @@ export default function DashboardScreen() {
 
     } catch (error) {
       console.error('Profile fetch error:', error);
+
       Alert.alert(
         'Connection Error',
         'Unable to fetch your profile. Please check your backend connection.'
@@ -90,87 +91,132 @@ export default function DashboardScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <ActivityIndicator size="large" color="#176B45" />
-        <Text style={styles.loadingText}>Loading your profile...</Text>
+        <Text style={styles.loadingText}>
+          Loading your profile...
+        </Text>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.logo}>LandConnect</Text>
-
-        <Text style={styles.welcome}>
-          Welcome, {user?.name || 'User'}!
-        </Text>
-
-        <Text style={styles.subtitle}>
-          Find, list and connect with land opportunities.
-        </Text>
-
-        {user && (
-          <View style={styles.profile}>
-            <Text style={styles.profileTitle}>Your Profile</Text>
-            <Text style={styles.profileText}>Name: {user.name}</Text>
-            <Text style={styles.profileText}>Email: {user.email}</Text>
-            <Text style={styles.profileText}>Role: {user.role}</Text>
-            <Text style={styles.verified}>✓ Profile fetched from backend</Text>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.cards}>
-        <Pressable
-          style={styles.card}
-          onPress={() => router.push('/explore')}
-        >
-          <Text style={styles.emoji}>🔍</Text>
-          <Text style={styles.cardTitle}>Explore Lands</Text>
-          <Text style={styles.cardText}>
-            Discover available land listings.
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.card}
-          onPress={() => router.push('/my-listings')}
-        >
-          <Text style={styles.emoji}>🏡</Text>
-          <Text style={styles.cardTitle}>My Listings</Text>
-          <Text style={styles.cardText}>
-            Manage your land properties.
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.card}
-          onPress={() => router.push('/messages')}
-        >
-          <Text style={styles.emoji}>💬</Text>
-          <Text style={styles.cardTitle}>Messages</Text>
-          <Text style={styles.cardText}>
-            Connect with other users.
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.card}
-          onPress={() => router.push('/calls')}
-        >
-          <Text style={styles.emoji}>📞</Text>
-          <Text style={styles.cardTitle}>Calls</Text>
-          <Text style={styles.cardText}>
-            Audio and video conversations.
-          </Text>
-        </Pressable>
-      </View>
-
-      <Pressable
-        style={styles.logout}
-        onPress={handleLogout}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
       >
-        <Text style={styles.logoutText}>Logout</Text>
-      </Pressable>
+        <View style={styles.header}>
+          <Text style={styles.logo}>LandConnect</Text>
+
+          <Text style={styles.welcome}>
+            Welcome, {user?.name || 'User'}!
+          </Text>
+
+          <Text style={styles.subtitle}>
+            Find, list and connect with land opportunities.
+          </Text>
+
+          {user && (
+            <View style={styles.profile}>
+              <Text style={styles.profileTitle}>
+                Your Profile
+              </Text>
+
+              <Text style={styles.profileText}>
+                Name: {user.name}
+              </Text>
+
+              <Text style={styles.profileText}>
+                Email: {user.email}
+              </Text>
+
+              <Text style={styles.profileText}>
+                Role: {user.role}
+              </Text>
+
+              <Text style={styles.verified}>
+                ✓ Profile fetched from backend
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.cards}>
+          <Pressable
+            style={styles.card}
+            onPress={() => router.push('/explore')}
+          >
+            <Text style={styles.emoji}>🔍</Text>
+            <Text style={styles.cardTitle}>
+              Explore Lands
+            </Text>
+            <Text style={styles.cardText}>
+              Discover available land listings.
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.card}
+            onPress={() => router.push('/my-listings')}
+          >
+            <Text style={styles.emoji}>🏡</Text>
+            <Text style={styles.cardTitle}>
+              My Listings
+            </Text>
+            <Text style={styles.cardText}>
+              Manage your land properties.
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.card}
+            onPress={() => router.push('/messages')}
+          >
+            <Text style={styles.emoji}>💬</Text>
+            <Text style={styles.cardTitle}>
+              Messages
+            </Text>
+            <Text style={styles.cardText}>
+              Connect with other users.
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.card}
+            onPress={() => router.push('/calls')}
+          >
+            <Text style={styles.emoji}>📞</Text>
+            <Text style={styles.cardTitle}>
+              Calls
+            </Text>
+            <Text style={styles.cardText}>
+              Audio and video conversations.
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.card}
+            onPress={() => router.push('/meeting-rooms')}
+          >
+            <Text style={styles.emoji}>🎥</Text>
+            <Text style={styles.cardTitle}>
+              Meeting Rooms
+            </Text>
+            <Text style={styles.cardText}>
+              Create a new meeting or join an existing room.
+            </Text>
+          </Pressable>
+        </View>
+
+        <Pressable
+          style={styles.logout}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutText}>
+            Logout
+          </Text>
+        </Pressable>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -179,10 +225,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAF7',
-    padding: 22,
+    paddingHorizontal: 22,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingTop: 15,
+    paddingBottom: 25,
   },
   header: {
-    marginTop: 15,
     marginBottom: 20,
   },
   logo: {
@@ -232,7 +284,6 @@ const styles = StyleSheet.create({
     color: '#176B45',
   },
   cards: {
-    flex: 1,
     gap: 10,
   },
   card: {
@@ -261,7 +312,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 20,
   },
   logoutText: {
     color: '#FFFFFF',

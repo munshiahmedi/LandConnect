@@ -16,6 +16,7 @@ export default function RootLayout() {
       <Stack.Screen name="chat" />
       <Stack.Screen name="calls" />
       <Stack.Screen name="call-screen" />
+      <Stack.Screen name="meeting-rooms" />
     </Stack>
   );
 }

@@ -1,5 +1,7 @@
 
 const db = require('../config/db');
+const cloudinary = require('../config/cloudinary');
+const streamifier = require('streamifier');
 
 const uploadLandImage = async (req, res) => {
   try {
@@ -10,7 +12,7 @@ const uploadLandImage = async (req, res) => {
       return res.status(400).json({ message: 'Please select an image' });
     }
 
-    // Verify that the listing exists and belongs to this user
+    // Verify land listing
     const [lands] = await db.query(
       'SELECT id, owner_id FROM lands WHERE id = ?',
       [landId]
@@ -26,8 +28,23 @@ const uploadLandImage = async (req, res) => {
       });
     }
 
-    const imageUrl = `http://192.168.29.105:5000/uploads/${req.file.filename}`;
+    // Upload image to Cloudinary
+    const imageUrl = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'landconnect/lands',
+          resource_type: 'image',
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result.secure_url);
+        }
+      );
 
+      streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
+    });
+
+    // Save Cloudinary URL in database
     await db.query(
       'INSERT INTO land_images (land_id, image_url) VALUES (?, ?)',
       [landId, imageUrl]
